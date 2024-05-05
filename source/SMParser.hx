@@ -110,17 +110,18 @@ class SMParser
 					if (timings.getTiming(0) != null) {
 						while (timings.getTiming(0) != null && beat >= timings.getTiming(0).beat) {
 							currentTiming = timings.shiftTiming();
-                            trace(currentTiming.beat);
 							stepCrotchet = currentTiming.getCrotchetMS() / 4;
+							snapTime = (stepCrotchet / (snap / 16));
 						}
 					}
 					var notes = currentSection[idx];
-
+                    
 					var beatOffset:Float = currentTiming.getBeat(offset);
 					row -= beatOffset * 48;
 					beat -= beatOffset;
-
-					var time = timeOffset + (idx * snapTime); // can prob do crotchet / (snap / 4)???
+                    
+					var time = timeOffset + snapTime; // can prob do crotchet / (snap / 4)???
+					timeOffset += snapTime;
 					time -= offset;
 					for(column in 0...notes.length){
 						var note = notes[column];
@@ -177,7 +178,7 @@ class SMParser
 					}
 					rowIndex++;
 				}
-				timeOffset += snapTime * snap;
+				//timeOffset += snapTime * snap;
 				sectionIndex++;
 				currentSection = [];
 			}else

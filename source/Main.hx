@@ -21,8 +21,10 @@ class Main extends mcli.CommandLine {
 		if (adjust == 'f' || adjust == 'false' || adjust=='no')
             adjustingOffset = false;
 
-        if(nuFNF)
+        if(nuFNF){
+            trace("dont adjust for offset lol");
             adjustingOffset = false; // V-Slice has its own Offset field
+        }
         
 		if (FileSystem.exists(smPath)){
             var content = File.getContent(smPath);
