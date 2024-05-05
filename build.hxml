@@ -1,0 +1,8 @@
+--class-path source
+--dce full
+--cpp bin/cpp
+--main Main
+-lib mcli
+-D windows
+-D PLATFORM=windows
+-D HAXE_OUTPUT_FILE=SMtoFNF
