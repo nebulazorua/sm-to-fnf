@@ -14,6 +14,7 @@ typedef SMNote = {
 typedef SMFile = {
 	metadata: StringMap<String>,
 	notes:StringMap<SMNoteData>,
+	difficulties: Array<String>,
     bpmChanges:Array<BPMChange>
 }
 
@@ -28,6 +29,7 @@ typedef SMNoteData = {
 
 class BPMChange {
     public var beat: Float = 0;
+    public var time:Float = 0;
     public var bpm: Float = 0;
     public function new(beat:Float, bpm:Float){
         this.beat = beat;
@@ -38,7 +40,6 @@ class BPMChange {
     public function getBeat(time:Float):Float{
         return time / getCrotchetMS();
     }
-    
 }
 
 class Timings
@@ -46,8 +47,13 @@ class Timings
     var timings:Array<BPMChange> = [];
     
     public function new(timings:Array<BPMChange>){
-        for(change in timings){
-            this.timings.push(new BPMChange(change.beat, change.bpm)); // copy the timings
+        timings.sort((a,b)->Std.int(a.beat - b.beat));
+		this.timings.push(new BPMChange(timings[0].beat, timings[0].bpm));
+		for (idx in 1...timings.length){
+            var change = new BPMChange(timings[idx].beat, timings[idx].bpm);
+            var lastChange = this.timings[idx - 1];
+			change.time = lastChange.time + ((change.beat - lastChange.beat) * lastChange.getCrotchetMS());
+			this.timings.push(change);
         }
     }
     
@@ -59,10 +65,24 @@ class Timings
         for(timing in timings){
 			if (beat >= timing.beat)
                 lastChange = timing;
-        }
+        }   
 
 		return lastChange;
     }
+	public function getTimingAtTime(time:Float) {
+		var lastChange = timings[0];
+		for (timing in timings) {
+			if (time >= timing.time)
+				lastChange = timing;
+		}
+
+		return lastChange;
+	}
+	public function getBeatForTime(time:Float) {
+        var timing = getTimingAtTime(time);
+		return timing.beat + ((time - timing.time) / timing.getCrotchetMS());
+    }
+    
 }
 
 class SMParser
@@ -86,14 +106,15 @@ class SMParser
 				
 				for(idx in 0...currentSection.length){
 					var row:Float = (sectionIndex * 192) + (lengthInRows * rowIndex);
-					var notes = currentSection[idx];
 					var beat = row / 48;
-                    if (timings.getTiming(0) != null) {
+					if (timings.getTiming(0) != null) {
 						while (timings.getTiming(0) != null && beat >= timings.getTiming(0).beat) {
 							currentTiming = timings.shiftTiming();
+                            trace(currentTiming.beat);
 							stepCrotchet = currentTiming.getCrotchetMS() / 4;
 						}
 					}
+					var notes = currentSection[idx];
 
 					var beatOffset:Float = currentTiming.getBeat(offset);
 					row -= beatOffset * 48;
@@ -156,7 +177,7 @@ class SMParser
 					}
 					rowIndex++;
 				}
-				timeOffset += snap * snapTime;
+				timeOffset += snapTime * snap;
 				sectionIndex++;
 				currentSection = [];
 			}else
@@ -170,7 +191,8 @@ class SMParser
 		var smFile:SMFile = {
 			metadata: new StringMap<String>(),
 			notes: new StringMap<SMNoteData>(),
-            bpmChanges: []
+            bpmChanges: [],
+			difficulties: []
 		}
 		var readingNoteData = false;
 		var noteFieldIndex = 0;
@@ -182,8 +204,9 @@ class SMParser
 		var rawNoteData:StringMap<Array<Dynamic>> = new StringMap<Array<Dynamic>>();
 
 		var noteData:Array<String> = [];
+		var regex = ~/(\/\/).+/;
 		for(data in file.split("\n")){
-			data = data.trim();
+			data = regex.replace(data, "").trim();
 			if(readingNoteData){
 				
 				var colon = data.split(":");
@@ -195,6 +218,7 @@ class SMParser
 				noteFieldIndex++;
                 if(data == ';'){
 					rawNoteData.set(rawData[2], rawData);
+					smFile.difficulties.push(rawData[2]);
 					rawData[5] = noteData;
 					rawData = [];
 
