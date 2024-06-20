@@ -91,7 +91,7 @@ class SMToFNF {
             generatedBy: Constants.generatedBy
         }
 
-		for (d in difficulties)chart.scrollSpeed.set(d, 2.8);
+		for (d in difficulties)chart.scrollSpeed.set(d, smData.bpmChanges[0].bpm * Constants.CMOD_TO_FNF);
 
         var timings = new Timings(smData.bpmChanges);
         while(timings.getTiming(0) != null) {
