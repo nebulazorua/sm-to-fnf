@@ -24,7 +24,6 @@ typedef LegacyChart = {
 }
 
 class SMToLegacy {
-	static var CMOD_TO_FNF = 0.003555555555555;
     public static function convert(smData:SMFile, ?difficulty:String){
 		if (difficulty==null)
 			difficulty = smData.difficulties[0];
@@ -68,7 +67,7 @@ class SMToLegacy {
 
 			theChart.notes[section].sectionNotes.push([note.time, note.column, note.length]);
 		}
-	    	theChart.speed = smData.bpmChanges[0].bpm * CMOD_TO_FNF;
+	    	theChart.speed = smData.bpmChanges[0].bpm * Constants.CMOD_TO_FNF;
         return {
             "song": theChart,
 			"generatedBy": Constants.generatedBy
